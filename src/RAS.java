@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.List;
 
+
 /**
  * RAS - Recursive Archive Scanner
  * This project is a restart of one that I'd been working on previously,
@@ -20,7 +21,10 @@ import java.util.List;
  *
  */
 public class RAS {
-	public static final boolean VERBOSE		= true;
+	public static final boolean VERBOSE			= 	true;
+	public static final boolean UNROLL_FIRST	=	false;
+	
+	public static final String tmpDir			= 	new String("/tmp"); 
 	
 	/**
 	 * @param args

@@ -1,30 +1,48 @@
-import java.util.ArrayList;
-import java.util.List;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.util.Set;
 
+/**
+ * 
+ * @author sprite
+ *
+ */
 public class Archive {
-	public static final String[] flagExtensions = { "tar", "tar.gz", "tgz", "tar.bz2", 
-	                                                "tar.xz" }; 
-	/**
-	 * Flag archives in the directory listing (by extension, not signature) in order to mark
-	 * them for later unrolling or other processing
-	 */
-	public static List<String> flagArchives(List<String> directory) {
-		List<String> internalArchives = new ArrayList<String>();
-		Boolean hit = false;
+	private String 	arcFileName;
+	private Path 	unrollPath;
+	private Boolean	containsArchives;
+	
+	public Archive(String fn) throws Exception {
+		File	archiveSource							=	new File(fn);
+		Boolean	stupidFlag								=	false;
+		Set<PosixFilePermission> perms					=
+			PosixFilePermissions.fromString("rwx------");
+		FileAttribute<Set<PosixFilePermission>> attr 	=
+			PosixFilePermissions.asFileAttribute(perms);
 		
-		for (String entry : directory) {
-			for (String ext : flagExtensions) {
-				if (entry.toLowerCase().endsWith(ext)) {
-					hit = true;
-					break;
-				}
-			}
-			
-			if (hit) {
-				internalArchives.add(entry);
+		if (!archiveSource.isFile()) {
+			throw new Exception("Invalid archive source: " + fn);
+		}
+		this.arcFileName = fn;
+		
+		for (String extension : Util.flagExtensions) {
+			if (this.arcFileName.toLowerCase().endsWith(extension)) {
+				stupidFlag = true;
+				break;
 			}
 		}
+		if (!stupidFlag) {
+			throw new Exception("Invalid archive source file extension");
+		}
 		
-		return internalArchives;
+		try {
+			unrollPath = Files.createTempDirectory(RAS.tmpDir, attr);
+		} catch (Exception ex) {
+			throw new Exception("Issue creating temp dir: " + ex.toString());
+		}
 	}
 }
