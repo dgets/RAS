@@ -1,3 +1,6 @@
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * RAS - Recursive Archive Scanner
  * This project is a restart of one that I'd been working on previously,
@@ -17,7 +20,8 @@
  *
  */
 public class RAS {
-
+	public static final boolean VERBOSE		= true;
+	
 	/**
 	 * @param args
 	 */
@@ -28,11 +32,14 @@ public class RAS {
             return;
         } else if (args.length == 1 && !args[0].equals("-v")) {
         	//list contents
+        	List<String> directory = new ArrayList<String>();
         	try {
-				Lister.listEntries(args[0]);
+				directory = Lister.getEntriesList(args[0]);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+        	
+        	System.out.println(directory.toString());
         } else {
         	//we're not there yet
         	System.out.println("Not supported yet . . .");
