@@ -1,5 +1,9 @@
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
 
 
 /**
@@ -56,4 +60,20 @@ public class RAS {
         System.out.println("Parameters: [-v] archive-name");
     }
 
+    private static void displayEntryData(HashMap<String, Boolean> eData) {
+    	Set archiveEntries = eData.keySet();
+    	Iterator entry = eData.keySet().iterator();
+    	
+    	if (VERBOSE) {
+    		System.out.println(
+    				"Entry Text (starred if flagged as recursive archive)\n" +
+    				"----------------------------------------------------");
+    	}
+    	
+    	while (entry.hasNext()) {
+    		HashMap.Entry<String, Boolean> ouah = 
+    				(Entry<String, Boolean>) entry.next();
+    	}
+    }
+    
 }
