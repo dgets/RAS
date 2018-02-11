@@ -27,6 +27,7 @@ import java.util.Set;
 public class RAS {
 	public static final boolean VERBOSE			= 	true;
 	public static final boolean UNROLL_FIRST	=	false;
+	public static final boolean USING_LISTER	= 	false;	//mine or apache's?
 	
 	public static final String tmpDir			= 	new String("/tmp"); 
 	
@@ -40,14 +41,30 @@ public class RAS {
             return;
         } else if (args.length == 1 && !args[0].equals("-v")) {
         	//list contents
-        	List<String> directory = new ArrayList<String>();
-        	try {
-				directory = Lister.getEntriesList(args[0]);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+        	if (USING_LISTER) {
+        		List<String> directory = new ArrayList<String>();
+        		
+        		try {
+        			directory = Lister.getEntriesList(args[0]);
+        		} catch (Exception e) {
+        			e.printStackTrace();
+        		}
         	
-        	System.out.println(directory.toString());
+        		System.out.println(directory.toString());
+        	} else {
+        		HashMap<String, Boolean> directory = 
+        			new HashMap<String, Boolean>();
+        		
+        		try {
+        			MyArchive archive = new MyArchive(args[0]);
+        			directory = archive.getEntryHash();
+        		} catch (Exception ex) {
+        			System.err.println("MyArchive Error: " + 
+        				ex.getMessage());
+        		}
+        		
+        		
+        	}
         } else {
         	//we're not there yet
         	System.out.println("Not supported yet . . .");

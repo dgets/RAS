@@ -13,7 +13,7 @@ public final class Lister {
 	@SuppressWarnings("null")
 	public static List<String> getEntriesList(final String fn) throws Exception {
     	if (Debugging.LISTER) {
-    		System.out.println("Analysing " + fn + ". . .");
+    		System.out.println("Analyzing " + fn + ". . .");
     	}
         
         final File f = new File(fn);
@@ -21,7 +21,7 @@ public final class Lister {
         if (!f.isFile()) {
         	//as we're conscripting this for our own purposes, might as well throw an exception
         	//here, I suppose
-            System.err.println(f + " doesn't exist or is a directory");
+            System.err.println(f.getName() + " doesn't exist or is a directory");
         }
         
         //okay, so I do understand this syntax now, but I really must say, it reduces the shit
