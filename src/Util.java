@@ -28,6 +28,10 @@ public class Util {
 		return internalArchives;
 	}
 	
+	public static Boolean runningOnDoze() {
+		return System.getProperty("os.name").startsWith("Windows");
+	}
+	
 	/**
 	 * Unroll archives (including recursive archival)
 	 */

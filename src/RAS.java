@@ -29,7 +29,9 @@ public class RAS {
 	public static final boolean UNROLL_FIRST	=	false;
 	public static final boolean USING_LISTER	= 	false;	//mine or apache's?
 	
-	public static final String tmpDir			= 	new String("/tmp"); 
+	//public static final String tmpDir			= 	new String("/tmp");
+	//public static final String tmpDir			=	System.getProperty("java.io.tmpdir")
+	//		+ "/RAS";
 	
 	/**
 	 * @param args
@@ -63,7 +65,9 @@ public class RAS {
         				ex.getMessage());
         		}
         		
-        		
+        		for (String entry : directory.keySet()) {
+        			System.out.println(entry);
+        		}
         	}
         } else {
         	//we're not there yet

@@ -1,3 +1,4 @@
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -11,6 +12,9 @@ import java.util.Set;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
+import org.apache.commons.compress.archivers.ArchiveStreamFactory;
+import org.apache.commons.compress.compressors.CompressorInputStream;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
 
 /**
  * 
@@ -29,7 +33,6 @@ public class MyArchive {
 		PosixFilePermissions.asFileAttribute(perms);
 	
 	public MyArchive(String fn) throws Exception {
-		//File	archiveSource							=	new File(fn);
 		Boolean	stupidFlag								=	false;
 		
 		this.archiveSource = new File(fn);
@@ -72,14 +75,21 @@ public class MyArchive {
 	public HashMap<String, Boolean> getEntryHash() throws Exception {
 		HashMap<String, Boolean> entryData = new HashMap<String, Boolean>();
 		ArchiveEntry entry = null;
-		FileInputStream fis = new FileInputStream(this.archiveSource);
-		InputStream is = (InputStream) fis;
-		ArchiveInputStream ais = (ArchiveInputStream) is;
+		/* FileInputStream fis = new FileInputStream(this.archiveSource);
+		ArchiveInputStream ais = (ArchiveInputStream) fis;
+		CompressorInputStream cis = 
+			new CompressorStreamFactory().createCompressorInputStream(fis);
+		try (final InputStream fis = new BufferedInputStream(Files.newInputStream(f.toPath()));
+            final ArchiveInputStream ais = factory.createArchiveInputStream(fis)) { */
+		InputStream fis = new BufferedInputStream(
+			Files.newInputStream(this.archiveSource.toPath()));
+		ArchiveInputStream ais = 
+			new ArchiveStreamFactory().createArchiveInputStream(fis);
 		
 		try {
-			unrollPath = Files.createTempDirectory(RAS.tmpDir, attr);
+			unrollPath = Files.createTempDirectory("RAS"/*, attr*/);
 		} catch (Exception ex) {
-			fis.close(); ais.close();
+			fis.close(); /*cis.close();*/ ais.close();
 			throw new Exception("Issue creating temp dir: " + ex.toString());
 		}
 		
@@ -88,7 +98,7 @@ public class MyArchive {
 				entryData.put(entry.getName(), false);
 			}
 		} catch (Exception ex) {
-			fis.close(); ais.close();
+			fis.close(); /*cis.close();*/ ais.close();
 			throw new Exception("Issue getting entry names: " + ex.toString());
 		}
 		
