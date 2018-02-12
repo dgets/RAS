@@ -66,6 +66,11 @@ public class RAS {
         		}
         		
         		for (String entry : directory.keySet()) {
+        			if (directory.get(entry)) {
+        				System.out.print(" * ");
+        			} else {
+        				System.out.print("   ");
+        			}
         			System.out.println(entry);
         		}
         	}

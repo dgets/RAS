@@ -94,8 +94,17 @@ public class MyArchive {
 		}
 		
 		try {
+			Boolean hit = false;
+			
 			while ((entry = ais.getNextEntry()) != null) {
-				entryData.put(entry.getName(), false);
+				for (String ext : Util.flagExtensions) {
+					if (entry.getName().toLowerCase().endsWith(ext)) {
+						hit = true;
+						break;
+					}
+				}
+				entryData.put(entry.getName(), hit);
+				hit = false;
 			}
 		} catch (Exception ex) {
 			fis.close(); /*cis.close();*/ ais.close();
