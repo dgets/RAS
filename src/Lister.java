@@ -1,66 +1,48 @@
-/*
- *  Licensed to the Apache Software Foundation (ASF) under one or more
- *  contributor license agreements.  See the NOTICE file distributed with
- *  this work for additional information regarding copyright ownership.
- *  The ASF licenses this file to You under the Apache License, Version 2.0
- *  (the "License"); you may not use this file except in compliance with
- *  the License.  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- */
-
-//package org.apache.commons.compress.archivers;
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.compress.archivers.*;
 
-/**
- * Simple command line application that lists the contents of an archive.
- *
- * <p>The name of the archive must be given as a command line argument.</p>
- * <p>The optional second argument defines the archive type, in case the format is not recognized.</p>
- *
- * @since 1.1
- */
 public final class Lister {
     private static final ArchiveStreamFactory factory = new ArchiveStreamFactory();
 
-    public static void listEntries(final String fn) throws Exception {
-        System.out.println("Analysing " + fn);
+	@SuppressWarnings("null")
+	public static List<String> getEntriesList(final String fn) throws Exception {
+    	if (Debugging.LISTER) {
+    		System.out.println("Analyzing " + fn + ". . .");
+    	}
         
         final File f = new File(fn);
         
         if (!f.isFile()) {
-            System.err.println(f + " doesn't exist or is a directory");
+        	//as we're conscripting this for our own purposes, might as well throw an exception
+        	//here, I suppose
+            System.err.println(f.getName() + " doesn't exist or is a directory");
         }
         
+        //okay, so I do understand this syntax now, but I really must say, it reduces the shit
+        //out of code readability, as far as I'm concerned; it's not originally my code, at
+        //least, so I'm not going to worry about its aesthetics.  It's all on you, apache...
+        List<String> directory = new ArrayList<String>();
         try (final InputStream fis = new BufferedInputStream(Files.newInputStream(f.toPath()));
                 final ArchiveInputStream ais = factory.createArchiveInputStream(fis)) {
-            System.out.println("Created " + ais.toString());
+        	if (RAS.VERBOSE) {
+        		System.out.println("Created " + ais.toString());
+        	}
+        	
             ArchiveEntry ae;
             while ((ae = ais.getNextEntry()) != null) {
-                System.out.println(ae.getName());
+                if (RAS.VERBOSE) {
+                	System.out.println(ae.getName());
+                }
+                directory.add(ae.getName());
             }
         }
+        
+        return directory;
     }
-
-    /*private static ArchiveInputStream createArchiveInputStream(final String[] args, final InputStream fis)
-            throws ArchiveException {
-        if (args.length > 1) {
-            return factory.createArchiveInputStream(args[1], fis);
-        }
-        return factory.createArchiveInputStream(fis);
-    }*/
-
 }
