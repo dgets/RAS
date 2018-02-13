@@ -1,7 +1,4 @@
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-
 
 /**
  * RAS - Recursive Archive Scanner
@@ -34,33 +31,35 @@ public class RAS {
 			//dump usage
             usage();
             return;
-        } else if (args.length == 1 && !args[0].equals("-v")) {
+        } else if (args[0].equals("-v")) {
+        	System.err.println("Sorry, verbose is set by default at this " +
+        		"point in development.\n");
+        	usage();
+        	return;
+        } else if (args.length == 1 /*&& !args[0].equals("-v")*/) {
         	//list contents
-        	if (USING_LISTER) {
-        		List<String> directory = new ArrayList<String>();
-        		
-        		try {
-        			directory = Lister.getEntriesList(args[0]);
-        		} catch (Exception e) {
-        			e.printStackTrace();
-        		}
-        	
-        		System.out.println(directory.toString());
-        	} else {
-        		HashMap<String, Boolean> directory = 
-        			new HashMap<String, Boolean>();
-        		
-        		try {
-        			MyArchive archive = new MyArchive(args[0]);
-        			directory = archive.getEntryHash();
-        		} catch (Exception ex) {
-        			System.err.println("MyArchive Error: " + 
-        				ex.getMessage());
-        		}
-        		
-        		displayEntryData(directory);
+        	HashMap<String, Boolean> directory = 
+        		new HashMap<String, Boolean>();
+
+        	try {
+        		MyArchive archive = new MyArchive(args[0]);
+        		directory = archive.getEntryHash();
+        	} catch (Exception ex) {
+        		System.err.println("MyArchive Error: " + 
+        			ex.getMessage());
         	}
-        } else {
+
+        	displayEntryData(directory);
+        } else if (args.length == 2 && args[0].equals("-x")) {
+        	//expand contents
+        	try {
+        		MyArchive archive = new MyArchive(args[1]);
+        		archive.unroll();
+        	} catch (Exception ex) {
+        		System.err.println("MyArchive Error: " + 
+        			ex.getMessage());
+        	}
+		} else {
         	//we're not there yet
         	System.out.println("Not supported yet . . .");
         	usage();

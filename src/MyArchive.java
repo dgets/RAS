@@ -1,17 +1,20 @@
 import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
+import org.apache.commons.compress.utils.IOUtils;
 
 /**
  * 
@@ -23,6 +26,7 @@ public class MyArchive {
 	private Path 	unrollPath;
 	private Boolean	containsArchives;
 	private File	archiveSource;
+	private ArrayList<String>	archiveContents;
 	
 	Set<PosixFilePermission> perms =
 		PosixFilePermissions.fromString("rwx------");
@@ -30,13 +34,14 @@ public class MyArchive {
 		PosixFilePermissions.asFileAttribute(perms);
 	
 	public MyArchive(String fn) throws Exception {
+		this.archiveContents = null;
+		this.unrollPath = null;
+		this.arcFileName = fn;
 		this.archiveSource = new File(fn);
 		
 		if (!archiveSource.isFile()) {
 			throw new Exception("Invalid archive source: " + fn);
 		}
-		
-		this.arcFileName = fn;
 	}
 	
 	//getters/setters
@@ -57,18 +62,30 @@ public class MyArchive {
 	}
 	
 	//methods
+	private ArchiveInputStream getArchiveInputStream() throws Exception {
+		InputStream fis = new BufferedInputStream(
+			Files.newInputStream(this.archiveSource.toPath()));
+		
+		return new ArchiveStreamFactory().createArchiveInputStream(fis);
+	}
+	
+	private void setUnrollPath() throws Exception {
+		if (unrollPath == null && !Util.runningOnDoze()) {
+			unrollPath = Files.createTempDirectory("RAS_", attr);
+		} else if (unrollPath == null) {
+			unrollPath = Files.createTempDirectory("RAS_");
+		}
+	}
+	
 	public HashMap<String, Boolean> getEntryHash() throws Exception {
 		HashMap<String, Boolean> entryData = new HashMap<String, Boolean>();
 		ArchiveEntry entry = null;
-		InputStream fis = new BufferedInputStream(
-			Files.newInputStream(this.archiveSource.toPath()));
-		ArchiveInputStream ais = 
-			new ArchiveStreamFactory().createArchiveInputStream(fis);
+		ArchiveInputStream ais = getArchiveInputStream();
 		
 		try {
-			unrollPath = Files.createTempDirectory("RAS");
+			setUnrollPath();
 		} catch (Exception ex) {
-			fis.close(); ais.close();
+			ais.close();
 			throw new Exception("Issue creating temp dir: " + ex.toString());
 		}
 		
@@ -82,15 +99,44 @@ public class MyArchive {
 						break;
 					}
 				}
+				archiveContents.add(entry.getName());
 				entryData.put(entry.getName(), hit);
 				hit = false;
 			}
 		} catch (Exception ex) {
-			fis.close(); ais.close();
+			ais.close();
 			throw new Exception("Issue getting entry names: " + ex.toString());
 		}
 		
-		fis.close(); ais.close();
+		ais.close();
 		return entryData;
+	}
+	
+	public void unroll() throws Exception {
+		ArchiveEntry entry;
+		File currentFile, parentFile;
+		
+		ArchiveInputStream ais = getArchiveInputStream();
+		
+		setUnrollPath();
+		
+		if (RAS.VERBOSE) {
+			System.out.println("Attempting to expand " + arcFileName + 
+				" to " + unrollPath);
+		}
+		
+		while ((entry = ais.getNextEntry()) != null) {
+			if (entry.isDirectory()) {
+				continue;
+			}
+			
+			currentFile = new File(unrollPath.toFile(), entry.getName());
+            parentFile = currentFile.getParentFile();
+            if (!parentFile.exists()) {
+                parentFile.mkdirs();
+            }
+            
+            IOUtils.copy(ais, new FileOutputStream(currentFile));
+		}
 	}
 }
