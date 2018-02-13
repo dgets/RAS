@@ -27,6 +27,7 @@ public class MyArchive {
 	private Boolean	containsArchives;
 	private File	archiveSource;
 	private ArrayList<String>	archiveContents;
+	private HashMap<String, Boolean>	internalArchives;
 	
 	Set<PosixFilePermission> perms =
 		PosixFilePermissions.fromString("rwx------");
@@ -90,18 +91,18 @@ public class MyArchive {
 		}
 		
 		try {
-			Boolean hit = false;
+			//Boolean hit = false;
 			
 			while ((entry = ais.getNextEntry()) != null) {
-				for (String ext : Util.flagExtensions) {
+				/*for (String ext : Util.flagExtensions) {
 					if (entry.getName().toLowerCase().endsWith(ext)) {
 						hit = true;
 						break;
 					}
-				}
+				}*/
 				archiveContents.add(entry.getName());
-				entryData.put(entry.getName(), hit);
-				hit = false;
+				/*entryData.put(entry.getName(), hit);
+				hit = false;*/
 			}
 		} catch (Exception ex) {
 			ais.close();
@@ -109,10 +110,13 @@ public class MyArchive {
 		}
 		
 		ais.close();
+		entryData = Util.findEmbedded(archiveContents);
+		
 		return entryData;
 	}
 	
-	public void unroll() throws Exception {
+	public HashMap<String, Boolean> unroll() throws Exception {
+		HashMap<String, Boolean> entryData = new HashMap<String, Boolean>();
 		ArchiveEntry entry;
 		File currentFile, parentFile;
 		
@@ -126,6 +130,8 @@ public class MyArchive {
 		}
 		
 		while ((entry = ais.getNextEntry()) != null) {
+			archiveContents.add(entry.getName());
+			
 			if (entry.isDirectory()) {
 				continue;
 			}
@@ -138,5 +144,16 @@ public class MyArchive {
             
             IOUtils.copy(ais, new FileOutputStream(currentFile));
 		}
+		entryData = Util.findEmbedded(archiveContents);
+		
+		System.out.println(arcFileName + " contents:");
+		if (Debugging.UNROLL) {
+			//list directory contents
+			for (String entryName : archiveContents) {
+				System.out.println(entryName);
+			}
+		}
+		
+		
 	}
 }
