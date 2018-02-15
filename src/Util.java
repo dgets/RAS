@@ -10,6 +10,8 @@ public class Util {
 	public static final String[] compressExtensions = { ".gz", ".tgz", ".bz2", ".xz", ".zip",
 														".arj", ".Z" };
 	
+	private static final int decompressionFactor = 2;
+	
 	public static Boolean runningOnDoze() {
 		return System.getProperty("os.name").startsWith("Windows");
 	}
@@ -42,5 +44,12 @@ public class Util {
 		}
 		
 		return contentFlags;
+	}
+	
+	public static Boolean checkDriveSpace(MyArchive archive, String partitionPath) {
+		File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+		
+		return (tmpDir.getFreeSpace() >= 
+			(archive.getArchiveSource().length() * decompressionFactor));
 	}
 }

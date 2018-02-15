@@ -22,13 +22,13 @@ import org.apache.commons.compress.utils.IOUtils;
  *
  */
 public class MyArchive {
-	private String 	arcFileName;
+	private String 	arcFileName;	//not sure if this is really necessary
 	private Path 	unrollPath;
 	private Boolean	containsArchives;
 	private File	archiveSource;
 	private ArrayList<String>	archiveContents;
 	private HashMap<String, Boolean>	internalArchives;
-	
+
 	Set<PosixFilePermission> perms =
 		PosixFilePermissions.fromString("rwx------");
 	FileAttribute<Set<PosixFilePermission>> attr =
