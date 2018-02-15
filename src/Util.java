@@ -46,10 +46,26 @@ public class Util {
 		return contentFlags;
 	}
 	
-	public static Boolean checkDriveSpace(MyArchive archive, String partitionPath) {
+	public static Boolean adequateDriveSpace(MyArchive archive, String partitionPath) {
 		File tmpDir = new File(System.getProperty("java.io.tmpdir"));
 		
 		return (tmpDir.getFreeSpace() >= 
 			(archive.getArchiveSource().length() * decompressionFactor));
+	}
+	
+	public static void unrollNextArchives(MyArchive currentArchive) throws Exception {
+		//ArrayList<MyArchive> nextArchives = new ArrayList<MyArchive>();
+		
+		for (MyArchive ouah : currentArchive.getInternalArchives()) {
+			try {
+				ouah.unroll(RAS.KEEP_GOING);
+			} catch (Exception ex) {
+				throw new Exception("Oh shit: " + ex.getMessage());
+			}
+		}
+	}
+	
+	public static void cleanUpMess(MyArchive wipeExpandedArchive) {
+		
 	}
 }

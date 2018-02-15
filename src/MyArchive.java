@@ -27,7 +27,7 @@ public class MyArchive {
 	private Boolean	containsArchives;
 	private File	archiveSource;
 	private ArrayList<String>	archiveContents;
-	private HashMap<String, Boolean>	internalArchives;
+	private ArrayList<MyArchive>	internalArchives;
 
 	Set<PosixFilePermission> perms =
 		PosixFilePermissions.fromString("rwx------");
@@ -39,6 +39,7 @@ public class MyArchive {
 		this.unrollPath = null;
 		this.arcFileName = fn;
 		this.archiveSource = new File(fn);
+		this.containsArchives = null;
 		
 		if (!archiveSource.isFile()) {
 			throw new Exception("Invalid archive source: " + fn);
@@ -60,6 +61,10 @@ public class MyArchive {
 	
 	public File getArchiveSource() {
 		return this.archiveSource;
+	}
+	
+	public ArrayList<MyArchive> getInternalArchives() {
+		return internalArchives;
 	}
 	
 	//methods
@@ -84,25 +89,8 @@ public class MyArchive {
 		ArchiveInputStream ais = getArchiveInputStream();
 		
 		try {
-			setUnrollPath();
-		} catch (Exception ex) {
-			ais.close();
-			throw new Exception("Issue creating temp dir: " + ex.toString());
-		}
-		
-		try {
-			//Boolean hit = false;
-			
 			while ((entry = ais.getNextEntry()) != null) {
-				/*for (String ext : Util.flagExtensions) {
-					if (entry.getName().toLowerCase().endsWith(ext)) {
-						hit = true;
-						break;
-					}
-				}*/
 				archiveContents.add(entry.getName());
-				/*entryData.put(entry.getName(), hit);
-				hit = false;*/
 			}
 		} catch (Exception ex) {
 			ais.close();
@@ -115,14 +103,19 @@ public class MyArchive {
 		return entryData;
 	}
 	
-	public HashMap<String, Boolean> unroll() throws Exception {
+	public HashMap<String, Boolean> unroll(Boolean keepGoing) throws Exception {
 		HashMap<String, Boolean> entryData = new HashMap<String, Boolean>();
 		ArchiveEntry entry;
 		File currentFile, parentFile;
 		
 		ArchiveInputStream ais = getArchiveInputStream();
 		
-		setUnrollPath();
+		try {
+			setUnrollPath();
+		} catch (Exception ex) {
+			ais.close();
+			throw new Exception("Issue creating temp dir: " + ex.toString());
+		}
 		
 		if (RAS.VERBOSE) {
 			System.out.println("Attempting to expand " + arcFileName + 
@@ -154,6 +147,24 @@ public class MyArchive {
 			}
 		}
 		
+		if (keepGoing) {
+			for (String fName : entryData.keySet()) {
+				if (entryData.get(fName)) {
+					internalArchives.add(new MyArchive(fName));
+				}
+				
+				if (!internalArchives.isEmpty()) {
+					this.containsArchives = true;
+				} else {
+					this.containsArchives = false;
+				}
+			}
+			
+			Util.unrollNextArchives(this);
+		}
 		
+		
+		
+		return entryData;
 	}
 }

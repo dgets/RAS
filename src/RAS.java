@@ -22,6 +22,7 @@ public class RAS {
 	public static final boolean VERBOSE			= 	true;
 	public static final boolean UNROLL_FIRST	=	false;
 	public static final boolean USING_LISTER	= 	false;
+	public static final boolean KEEP_GOING		=	true;
 	
 	/**
 	 * @param args
@@ -51,13 +52,24 @@ public class RAS {
 
         	displayEntryData(directory);
         } else if (args.length == 2 && args[0].equals("-x")) {
+        	MyArchive archive = null;
         	//expand contents
         	try {
-        		MyArchive archive = new MyArchive(args[1]);
-        		archive.unroll();
+        		archive = new MyArchive(args[1]);
+        		archive.unroll(KEEP_GOING);	//this will be set by user arg l8r
         	} catch (Exception ex) {
         		System.err.println("MyArchive Error: " + 
         			ex.getMessage());
+        	}
+        	
+        	if (archive.getContainsArchives()) {
+        		try { 
+        			Util.unrollNextArchives(archive);
+        		} catch (Exception ex) {
+        			System.err.println("Util.unrollNextArchives() error: " +
+        				ex.getMessage());
+        			return;
+        		}
         	}
 		} else {
         	//we're not there yet
