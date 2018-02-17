@@ -52,25 +52,27 @@ public class RAS {
 
         	displayEntryData(directory);
         } else if (args.length == 2 && args[0].equals("-x")) {
-        	MyArchive archive = null;
         	//expand contents
         	try {
-        		archive = new MyArchive(args[1]);
+        		MyArchive archive = new MyArchive(args[1]);
         		archive.unroll(KEEP_GOING);	//this will be set by user arg l8r
+        		if (archive.getContainsArchives()) {
+            		try { 
+            			Util.unrollNextArchives(archive);
+            		} catch (Exception ex) {
+            			System.err.println("Util.unrollNextArchives() error: " +
+            				ex.getMessage());
+            			return;
+            		}
+            	}
         	} catch (Exception ex) {
         		System.err.println("MyArchive Error: " + 
         			ex.getMessage());
         	}
         	
-        	if (archive.getContainsArchives()) {
-        		try { 
-        			Util.unrollNextArchives(archive);
-        		} catch (Exception ex) {
-        			System.err.println("Util.unrollNextArchives() error: " +
-        				ex.getMessage());
-        			return;
-        		}
-        	}
+        	 /*else if (archive.getContainsArchives() == null) {
+        		System.err.println("archive.containsArchives is not initialized");
+        	}*/
 		} else {
         	//we're not there yet
         	System.out.println("Not supported yet . . .");
@@ -79,10 +81,19 @@ public class RAS {
 
 	}
 	
+	/**
+	 * Dumps usage instructions to stdout
+	 */
     private static void usage() {
         System.out.println("Parameters: [-v] archive-name");
     }
 
+    /**
+     * Displays the entry data hash in a user friendly form; archived pathname
+     * preceded by an asterisk if the entry is flagged as an embedded archive
+     * 
+     * @param eData
+     */
     private static void displayEntryData(HashMap<String, Boolean> eData) {
     	if (VERBOSE) {
     		System.out.println(

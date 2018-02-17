@@ -1,6 +1,7 @@
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,14 +18,16 @@ import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.commons.compress.utils.IOUtils;
 
 /**
+ * Class represents a particular archive and, after initialization, its
+ * contents, informational flags, and limited methods for working with it.
  * 
- * @author sprite
+ * @author Damon Getsman
  *
  */
 public class MyArchive {
 	private String 	arcFileName;	//not sure if this is really necessary
 	private Path 	unrollPath;
-	private Boolean	containsArchives;
+	private boolean	containsArchives;
 	private File	archiveSource;
 	private ArrayList<String>	archiveContents;
 	private ArrayList<MyArchive>	internalArchives;
@@ -39,7 +42,7 @@ public class MyArchive {
 		this.unrollPath = null;
 		this.arcFileName = fn;
 		this.archiveSource = new File(fn);
-		this.containsArchives = null;
+		//this.containsArchives = null;
 		
 		if (!archiveSource.isFile()) {
 			throw new Exception("Invalid archive source: " + fn);
@@ -68,6 +71,13 @@ public class MyArchive {
 	}
 	
 	//methods
+	/**
+	 * Opens an InputStream to the archive's source, converts it to an 
+	 * ArchiveInputStream, and returns it for processing.
+	 * 
+	 * @return ArchiveInputStream
+	 * @throws Exception
+	 */
 	private ArchiveInputStream getArchiveInputStream() throws Exception {
 		InputStream fis = new BufferedInputStream(
 			Files.newInputStream(this.archiveSource.toPath()));
@@ -75,6 +85,14 @@ public class MyArchive {
 		return new ArchiveStreamFactory().createArchiveInputStream(fis);
 	}
 	
+	/**
+	 * Creates a temporary directory specifically for unrolling of this
+	 * archive, utilizing Files.createTempDirectory() to ensure uniqueness
+	 * of the directory name.  Also sets the unrollPath for this archive
+	 * record.
+	 * 
+	 * @throws Exception
+	 */
 	private void setUnrollPath() throws Exception {
 		if (unrollPath == null && !Util.runningOnDoze()) {
 			unrollPath = Files.createTempDirectory("RAS_", attr);
@@ -83,6 +101,16 @@ public class MyArchive {
 		}
 	}
 	
+	/**
+	 * Sequentially reads the records from the ArchiveInputStream, adding
+	 * the entry names to archiveContents.  entryData is populated with the
+	 * content paths and corresponding embedded archive flags.  This will
+	 * probably have the archiveContents removed in the future in favor of
+	 * a less redundant data structure for things.
+	 * 
+	 * @return HashMap entryData
+	 * @throws Exception
+	 */
 	public HashMap<String, Boolean> getEntryHash() throws Exception {
 		HashMap<String, Boolean> entryData = new HashMap<String, Boolean>();
 		ArchiveEntry entry = null;
@@ -103,6 +131,20 @@ public class MyArchive {
 		return entryData;
 	}
 	
+	/**
+	 * Reads the ArchiveInputStream, populating archiveContents and entryData.
+	 * Obviously this duplicates a lot of code with getEntryHash() and needs
+	 * to be trimmed down appropriately.  This method also sets the unroll
+	 * path, and expands the contents there, recursively if passed true in
+	 * keepGoing.
+	 * 
+	 * Adding the feature now where the method will test for adequate drive-
+	 * space prior to going about unrolling.
+	 * 
+	 * @param keepGoing Boolean
+	 * @return HashMap entryData
+	 * @throws Exception
+	 */
 	public HashMap<String, Boolean> unroll(Boolean keepGoing) throws Exception {
 		HashMap<String, Boolean> entryData = new HashMap<String, Boolean>();
 		ArchiveEntry entry;
@@ -114,7 +156,7 @@ public class MyArchive {
 			setUnrollPath();
 		} catch (Exception ex) {
 			ais.close();
-			throw new Exception("Issue creating temp dir: " + ex.toString());
+			throw new Exception("Issue creating temp dir: " + ex.getMessage());
 		}
 		
 		if (RAS.VERBOSE) {
@@ -134,8 +176,13 @@ public class MyArchive {
             if (!parentFile.exists()) {
                 parentFile.mkdirs();
             }
-            
+            if (Debugging.UNROLL) {
+				System.out.print("Expanding: " + currentFile + " . . .  ");
+			}
             IOUtils.copy(ais, new FileOutputStream(currentFile));
+            if (Debugging.UNROLL) {
+            	System.out.println("done.");
+            }
 		}
 		entryData = Util.findEmbedded(archiveContents);
 		
@@ -152,18 +199,15 @@ public class MyArchive {
 				if (entryData.get(fName)) {
 					internalArchives.add(new MyArchive(fName));
 				}
-				
-				if (!internalArchives.isEmpty()) {
-					this.containsArchives = true;
-				} else {
-					this.containsArchives = false;
-				}
+			}
+			if (!internalArchives.isEmpty()) {
+				this.containsArchives = true;
+			} else {
+				this.containsArchives = false;
 			}
 			
 			Util.unrollNextArchives(this);
 		}
-		
-		
 		
 		return entryData;
 	}
