@@ -112,6 +112,17 @@ public class MyArchive {
 		return entryData;
 	}
 	
+	/*
+	 * This is the method that we're going to have to use for things to work
+	 * as I originally intended.  Obviously we can't recurse into the sub-
+	 * archives if we don't unroll things first.
+	 * 
+	 * Of course we _could_ set an option to minimize space used, if only a
+	 * listing of all recursed contents are required; it could be implemented
+	 * by selectively unrolling only internal archives, leaving non-archives
+	 * alone.  Then ad infinitum, of course, with the recursion.
+	 * 
+	 */
 	public void unroll() throws Exception {
 		ArchiveEntry entry;
 		File currentFile, parentFile;
